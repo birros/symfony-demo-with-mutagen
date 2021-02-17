@@ -13,7 +13,6 @@ SH_WWW= docker-compose exec -u 33:33 app bash
 IF_EMPTY_APP_SECRET=source .env; test -z \$${APP_SECRET}
 IF_NO_DOT_ENV=! test -f .env
 COPY_GITCONFIG=docker cp ${GITCONFIG_PATH} $$(docker-compose ps -q app):/var/www/.gitconfig
-GENERATE_DOCKER_COMPOSE=set -a; source $$PWD/.env; envsubst < docker-compose.template.yml > docker-compose.yml
 GENERATE_MUTAGEN=set -a; source $$PWD/.env; envsubst < mutagen.template.yml > mutagen.yml
 SETUP_DOT_ENV=sed -e 's/^DATABASE_URL=.*/DATABASE_URL=mysql:\/\/${DB_USERNAME}:@db:3306\/${DB_DATABASE}/g' .env.example > .env
 RANDOM_STRING=cat \/dev\/urandom | head -c\$${1:-32} | md5sum | cut -c -32
@@ -21,7 +20,6 @@ GENERATE_APP_SECRET=sed -i -e \"s/^APP_SECRET=\$$/APP_SECRET=\$$(${RANDOM_STRING
 
 .PHONY: docker-build
 docker-build:
-	@${GENERATE_DOCKER_COMPOSE}
 	docker-compose build
 
 .PHONY: docker-up
