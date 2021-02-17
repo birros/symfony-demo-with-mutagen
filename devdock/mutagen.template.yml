@@ -1,0 +1,18 @@
+sync:
+  ${PROJECT_NAME}-code:
+    alpha: ${REPO_PATH}
+    beta: "docker://${PROJECT_NAME}_mutagen/var/www/html"
+    mode: "two-way-resolved"
+    ignore:
+      paths:
+        - "/var"
+        - "/vendor"
+        - "/node_modules"
+        - "/.composer"
+        - "/.npm"
+    configurationBeta:
+      permissions:
+        defaultOwner: "id:33" # www-data
+        defaultGroup: "id:33" # www-data
+        defaultFileMode: 666
+        defaultDirectoryMode: 777

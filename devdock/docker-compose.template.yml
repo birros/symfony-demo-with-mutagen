@@ -1,0 +1,50 @@
+version: '2'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.0.2}
+        COMPOSER_VERSION: ${COMPOSER_VERSION:-2.0.9}
+    container_name: ${PROJECT_NAME}_app
+    volumes:
+      - ${PROJECT_NAME}_code:/var/www/html
+    networks:
+      - reverse-proxy
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${PROJECT_NAME}.entrypoints=https"
+      - "traefik.http.routers.${PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${PROJECT_NAME}.rule=Host(`${PROJECT_HOST}`)"
+
+  db:
+    image: mariadb:${MARIADB_VERSION:-10.5.8}
+    container_name: ${PROJECT_NAME}_db
+    volumes:
+      - ${PROJECT_NAME}_db:/var/lib/mysql
+    networks:
+      - db
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+  mutagen:
+    image: alpine:${ALPINE_VERSION:-3.13.1}
+    container_name: ${PROJECT_NAME}_mutagen
+    volumes:
+      - ${PROJECT_NAME}_code:/var/www/html
+    command: tail -f /dev/null
+
+networks:
+  reverse-proxy:
+    external: true
+  db:
+
+volumes:
+  ${PROJECT_NAME}_code:
+  ${PROJECT_NAME}_db:
