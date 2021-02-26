@@ -25,6 +25,8 @@ docker-build:
 .PHONY: docker-up
 docker-up: docker-build
 	docker-compose up -d
+	@${SH_ROOT} -c "chown -R www-data:www-data /var/www/.composer"
+	@${SH_ROOT} -c "chown -R www-data:www-data /var/www/.npm"
 	@${COPY_GITCONFIG}
 
 .PHONY: mutagen-up
@@ -34,9 +36,9 @@ mutagen-up: docker-up
 
 .PHONY: up
 up: mutagen-up
-	@${SH_WWW} -c "${IF_NO_DOT_ENV}       && ${SETUP_DOT_ENV}"                            || exit 0
-	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && source /etc/bash.bashrc && composer install" || exit 0
-	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && ${GENERATE_APP_SECRET}"                      || exit 0
+	@${SH_WWW} -c "${IF_NO_DOT_ENV}       && ${SETUP_DOT_ENV}"       || exit 0
+	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && composer install"       || exit 0
+	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && ${GENERATE_APP_SECRET}" || exit 0
 
 .PHONY: restart
 restart:

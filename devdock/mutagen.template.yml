@@ -8,8 +8,6 @@ sync:
         - "/var"
         - "/vendor"
         - "/node_modules"
-        - "/.composer"
-        - "/.npm"
     configurationBeta:
       permissions:
         defaultOwner: "id:33" # www-data
