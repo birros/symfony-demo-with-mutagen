@@ -18,7 +18,7 @@ SETUP_DOT_ENV=sed -e 's/^DATABASE_URL=.*/DATABASE_URL=mysql:\/\/${DB_USERNAME}:@
 RANDOM_STRING=cat \/dev\/urandom | head -c\$${1:-32} | md5sum | cut -c -32
 GENERATE_APP_SECRET=sed -i -e \"s/^APP_SECRET=\$$/APP_SECRET=\$$(${RANDOM_STRING})/g\" .env
 ASK_CONFIRM=printf "Are you sure? [y/N] " && read ans && [ $${ans:-N} == y ]
-DOCKER_VOLUME_RM=VOLUMES=$$(docker run --rm -v $$PWD/docker-compose.yml:/docker-compose.yml:ro --entrypoint yq linuxserver/yq -r '.volumes | keys | join(" ")' /docker-compose.yml) \
+DOCKER_VOLUME_RM=VOLUMES=$$(docker run --rm -v $$PWD/docker-compose.yml:/docker-compose.yml:ro mikefarah/yq e '.volumes | keys | join(" ")' /docker-compose.yml) \
 	&& for v in $$VOLUMES; do docker volume rm ${COMPOSE_PROJECT_NAME}_$$v; done
 
 .PHONY: docker-build
