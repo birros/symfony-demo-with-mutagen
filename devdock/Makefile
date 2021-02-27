@@ -1,7 +1,13 @@
 all: up
 
-# Create .env if doesn't exists & load it
+# Create .env if doesn't exists
 $(shell test -f .env || cp .env.example .env)
+
+# Populate UID & GID vars
+$(shell sed -i '' 's/UID=.*/UID=$(shell id -u)/g' .env)
+$(shell sed -i '' 's/GID=.*/GID=$(shell id -g)/g' .env)
+
+# Load dot env
 include .env
 
 # Constants
@@ -13,7 +19,6 @@ SH_WWW= docker-compose exec -u 33:33 app bash
 IF_EMPTY_APP_SECRET=source .env; test -z \$${APP_SECRET}
 IF_NO_DOT_ENV=! test -f .env
 COPY_GITCONFIG=docker cp ${GITCONFIG_PATH} $$(docker-compose ps -q app):/var/www/.gitconfig
-GENERATE_MUTAGEN=set -a; source $$PWD/.env; envsubst < mutagen.template.yml > mutagen.yml
 SETUP_DOT_ENV=sed -e 's/^DATABASE_URL=.*/DATABASE_URL=mysql:\/\/${DB_USERNAME}:@db:3306\/${DB_DATABASE}/g' .env.example > .env
 RANDOM_STRING=cat \/dev\/urandom | head -c\$${1:-32} | md5sum | cut -c -32
 GENERATE_APP_SECRET=sed -i -e \"s/^APP_SECRET=\$$/APP_SECRET=\$$(${RANDOM_STRING})/g\" .env
@@ -32,13 +37,8 @@ docker-up: docker-build
 	@${SH_ROOT} -c "chown -R www-data:www-data /var/www/.npm"
 	@${COPY_GITCONFIG}
 
-.PHONY: mutagen-up
-mutagen-up: docker-up
-	@${GENERATE_MUTAGEN}
-	mutagen project start || exit 0
-
 .PHONY: up
-up: mutagen-up
+up: docker-up
 	@${SH_WWW} -c "${IF_NO_DOT_ENV}       && ${SETUP_DOT_ENV}"       || exit 0
 	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && composer install"       || exit 0
 	@${SH_WWW} -c "${IF_EMPTY_APP_SECRET} && ${GENERATE_APP_SECRET}" || exit 0
@@ -47,19 +47,15 @@ up: mutagen-up
 restart:
 	docker-compose restart
 
-.PHONY: mutagen-down
-mutagen-down:
-	mutagen project terminate || exit 0
-
 .PHONY: docker-stop
-docker-stop: mutagen-down
+docker-stop:
 	docker-compose stop
 
 .PHONY: stop
 stop: docker-stop
 
 .PHONY: docker-down
-docker-down: mutagen-down
+docker-down:
 	docker-compose down
 
 .PHONY: docker-volume-rm
