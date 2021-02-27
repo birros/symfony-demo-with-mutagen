@@ -1,4 +1,4 @@
-all: up
+all: vscode
 
 # Create .env if doesn't exists
 $(shell test -f .env || cp .env.example .env)
@@ -23,8 +23,14 @@ SETUP_DOT_ENV=sed -e 's/^DATABASE_URL=.*/DATABASE_URL=mysql:\/\/${DB_USERNAME}:@
 RANDOM_STRING=cat \/dev\/urandom | head -c\$${1:-32} | md5sum | cut -c -32
 GENERATE_APP_SECRET=sed -i -e \"s/^APP_SECRET=\$$/APP_SECRET=\$$(${RANDOM_STRING})/g\" .env
 ASK_CONFIRM=printf "Are you sure? [y/N] " && read ans && [ $${ans:-N} == y ]
+PWD_HEX=$(shell printf $$PWD | xxd -pu | tr -d "\n\r")
+WORKSPACE_FOLDER=$(shell grep workspaceFolder .devcontainer.json | sed 's/^ *"workspaceFolder" *: *"\(.*\)".*/\1/')
 DOCKER_VOLUME_RM=VOLUMES=$$(docker run --rm -v $$PWD/docker-compose.yml:/docker-compose.yml:ro mikefarah/yq e '.volumes | keys | join(" ")' /docker-compose.yml) \
 	&& for v in $$VOLUMES; do docker volume rm ${COMPOSE_PROJECT_NAME}_$$v; done
+
+.PHONY: vscode
+vscode:
+	@code --folder-uri "vscode-remote://dev-container+${PWD_HEX}${WORKSPACE_FOLDER}"
 
 .PHONY: docker-build
 docker-build:
